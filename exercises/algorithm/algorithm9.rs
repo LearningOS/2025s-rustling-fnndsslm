@@ -2,7 +2,7 @@
 	heap
 	This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
+
 
 use std::cmp::Ord;
 use std::default::Default;
@@ -37,7 +37,33 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.items.push(value);
+        self.count += 1;
+        self.heapify_up(self.count);
+    }
+
+    fn heapify_up(&mut self,mut idx:usize){
+        while idx > 1{
+            let p = self.parent_idx(idx);
+            if (self.comparator)(&self.items[idx],&self.items[p]){
+                self.items.swap(idx,p);
+                idx = p;
+            }else{
+                break;
+            }
+        }
+    }
+
+    fn heapify_down(&mut self, mut idx: usize) {
+        while self.children_present(idx) {
+            let child_idx = self.smallest_child_idx(idx);
+            if (self.comparator)(&self.items[child_idx], &self.items[idx]) {
+                self.items.swap(child_idx, idx);
+                idx = child_idx;
+            } else {
+                break;
+            }
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -57,8 +83,23 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left = self.left_child_idx(idx);
+        if left > self.count {
+            // 没有子节点，理论上不应调用此情况
+            // 可以 panic 或返回 idx（但通常 heapify_down 会先检查 children_present）
+            idx 
+        } else {
+            let right = self.right_child_idx(idx);
+            if right > self.count {
+                // 只有左子节点
+                left
+            } else if (self.comparator)(&self.items[left], &self.items[right]) {
+                // 比较左右子节点，返回更符合条件的
+                left
+            } else {
+                right
+            }
+        }
     }
 }
 
@@ -84,9 +125,18 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        if self.count == 0 {
+            return None;
+        }
+        // 堆顶是 items[1]（因为 items[0] 是默认值）
+        let top = self.items.swap_remove(1); // 移除堆顶，并用最后一个元素替换
+        self.count -= 1;
+        if self.count > 0 {
+            self.heapify_down(1); // 从堆顶开始下沉调整
+        }
+        Some(top)
     }
+    
 }
 
 pub struct MinHeap;

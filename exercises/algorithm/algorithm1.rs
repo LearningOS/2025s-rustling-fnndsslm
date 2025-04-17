@@ -2,11 +2,12 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
+
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
 use std::vec::*;
+
 
 #[derive(Debug)]
 struct Node<T> {
@@ -22,20 +23,21 @@ impl<T> Node<T> {
         }
     }
 }
+
 #[derive(Debug)]
-struct LinkedList<T> {
+struct LinkedList<T: Display + PartialOrd> {
     length: u32,
     start: Option<NonNull<Node<T>>>,
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: Display + PartialOrd> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: Display + PartialOrd> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -69,33 +71,52 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+
+    pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self {
+        let mut merged = LinkedList::new();
+        let mut tail = &mut merged.start;
+        
+        unsafe {
+            while let (Some(a), Some(b)) = (list_a.start, list_b.start) {
+                if (*a.as_ptr()).val <= (*b.as_ptr()).val {
+                    *tail = list_a.start;
+                    list_a.start = (*a.as_ptr()).next;
+                    tail = &mut (*tail.as_mut().unwrap().as_ptr()).next;
+                    list_a.length -= 1;
+                } else {
+                    *tail = list_b.start;
+                    list_b.start = (*b.as_ptr()).next;
+                    tail = &mut (*tail.as_mut().unwrap().as_ptr()).next;
+                    list_b.length -= 1;
+                }
+                merged.length += 1;
+            }
+            
+            if list_a.start.is_some() {
+                *tail = list_a.start;
+                merged.end = list_a.end;
+                merged.length += list_a.length;
+            } else {
+                *tail = list_b.start;
+                merged.end = list_b.end;
+                merged.length += list_b.length;
+            }
         }
-	}
+        
+        merged
+    }
 }
 
-impl<T> Display for LinkedList<T>
-where
-    T: Display,
-{
+impl<T: Display + std::cmp::PartialOrd> Display for LinkedList<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self.start {
             Some(node) => write!(f, "{}", unsafe { node.as_ref() }),
-            None => Ok(()),
+            None => write!(f, "[]"),
         }
     }
 }
 
-impl<T> Display for Node<T>
-where
-    T: Display,
-{
+impl<T: Display + std::cmp::PartialOrd> Display for Node<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self.next {
             Some(node) => write!(f, "{}, {}", self.val, unsafe { node.as_ref() }),
